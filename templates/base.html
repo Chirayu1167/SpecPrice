@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="theme-color" content="#073f7e"/>
+<meta name="description" content="SpecPrice estimates a smartphone's fair market value from its specifications using an XGBoost model trained on a 2026 India-market dataset. Try the predictor, compare retail prices, and get data-driven buy advice."/>
+<meta property="og:title" content="SpecPrice — Smartphone Price Intelligence"/>
+<meta property="og:description" content="Estimate what a smartphone is worth from its hardware. Specification-based price estimation, retail comparison, and a transparent buy advisor."/>
+<meta property="og:type" content="website"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23073f7e'/%3E%3Ctext x='16' y='22.5' font-family='Arial, sans-serif' font-size='16' font-weight='700' fill='white' text-anchor='middle'%3E%E2%82%B9%3C/text%3E%3C/svg%3E"/>
+<title>{% block title %}SpecPrice{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "surface-variant": "#e0e3e8",
+        "on-tertiary-container": "#ffc186",
+        "surface-container-high": "#e5e8ee",
+        "surface-dim": "#d7dadf",
+        "inverse-surface": "#2d3135",
+        "tertiary-fixed-dim": "#ffb871",
+        "on-tertiary-fixed-variant": "#6a3c00",
+        "on-secondary-container": "#626566",
+        "on-secondary-fixed": "#191c1d",
+        "primary-container": "#2b5797",
+        "on-surface": "#181c20",
+        "surface-container": "#ebeef3",
+        "tertiary-container": "#814a00",
+        "on-background": "#181c20",
+        "surface-container-highest": "#e0e3e8",
+        "primary-fixed-dim": "#aac7ff",
+        "primary-fixed": "#d6e3ff",
+        "inverse-primary": "#aac7ff",
+        "on-tertiary-fixed": "#2d1600",
+        "secondary-container": "#e1e3e4",
+        "primary": "#073f7e",
+        "on-error-container": "#93000a",
+        "outline": "#737781",
+        "on-secondary": "#ffffff",
+        "on-primary-fixed-variant": "#144685",
+        "background": "#f7f9ff",
+        "surface-bright": "#f7f9ff",
+        "tertiary": "#603600",
+        "tertiary-fixed": "#ffdcbe",
+        "secondary-fixed": "#e1e3e4",
+        "secondary-fixed-dim": "#c5c7c8",
+        "surface-container-lowest": "#ffffff",
+        "secondary": "#5c5f60",
+        "error-container": "#ffdad6",
+        "surface-container-low": "#f1f4f9",
+        "on-primary": "#ffffff",
+        "on-error": "#ffffff",
+        "error": "#ba1a1a",
+        "on-primary-container": "#b5ceff",
+        "on-secondary-fixed-variant": "#454748",
+        "on-surface-variant": "#434750",
+        "surface-tint": "#335e9f",
+        "on-primary-fixed": "#001b3e",
+        "outline-variant": "#c3c6d2",
+        "on-tertiary": "#ffffff",
+        "inverse-on-surface": "#eef1f6",
+        "surface": "#f7f9ff",
+        "good": "#0e8a16",
+        "good-bg": "#e6ffed",
+        "bad": "#d73a49",
+        "bad-bg": "#ffeef0"
+      },
+      borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+      spacing: { "xl": "48px", "base": "4px", "xs": "4px", "lg": "24px", "gutter": "16px", "md": "16px", "margin": "24px", "sm": "8px" },
+      fontFamily: { "sans": ["Inter"], "data-mono": ["Inter"] },
+      fontSize: {
+        "data-mono": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }]
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Inter', sans-serif; background-color: #f7f9ff; color: #181c20; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .custom-checkbox {
+    appearance: none; background-color: #fff; margin: 0; font: inherit; color: currentColor;
+    width: 1.15em; height: 1.15em; border: 1px solid #737781; border-radius: 0.25rem;
+    display: grid; place-content: center; cursor: pointer;
+  }
+  .custom-checkbox::before {
+    content: ""; width: 0.65em; height: 0.65em; transform: scale(0); transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em white; background-color: transparent; transform-origin: center;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+  }
+  .custom-checkbox:checked { background-color: #073f7e; border-color: #073f7e; }
+  .custom-checkbox:checked::before { transform: scale(1); }
+  input[type="number"], select, input[type="text"] { -webkit-appearance: none; appearance: none; }
+  .field { border: 1px solid #c3c6d2; border-radius: 0.5rem; padding: 0.5rem 0.5rem; background-color: #ffffff; font-size: 14px; line-height: 20px; color: #181c20; outline: none; width: 100%; }
+  .field:focus { border-color: #073f7e; box-shadow: 0 0 0 1px #073f7e; }
+  select.field { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737781' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+  .field-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #434750; margin-bottom: 4px; }
+  .table-row-hover:hover { background-color: #f1f4f9; }
+  html { scroll-behavior: smooth; }
+  :focus-visible { outline: 2px solid #073f7e; outline-offset: 2px; }
+  ::selection { background: #d6e3ff; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-up { animation: fadeUp 0.3s ease both; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+{% block head %}{% endblock %}
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-primary focus:text-on-primary focus:px-3 focus:py-2 focus:rounded font-label-md text-label-md">Skip to content</a>
+<nav class="bg-surface-container-lowest border-b border-outline-variant shadow-sm fixed top-0 w-full z-50">
+  <div class="flex items-center justify-between px-margin h-16 max-w-[1200px] mx-auto">
+    <a href="/" class="font-headline-md text-headline-md font-bold text-primary" aria-label="SpecPrice home">SpecPrice</a>
+    <div class="hidden md:flex items-center gap-md">
+      {% set nav = {"predict": "Predict", "compare": "Compare", "insights": "Insights", "advisor": "Buy Advisor", "methodology": "Methodology"} %}
+      {% for key, label in nav.items() %}
+      <a href="/{{ key }}" class="{% if active == key %}text-primary border-b-2 border-primary pb-1 font-semibold{% else %}text-on-surface-variant hover:text-primary transition-colors{% endif %} font-body-md text-body-md" {% if active == key %}aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </div>
+    <div class="flex items-center gap-md">
+      <span class="text-on-surface-variant hidden lg:inline font-label-md text-label-md">Dataset: 2026 • Model: XGBoost</span>
+      <button id="menu-btn" class="md:hidden flex items-center justify-center w-9 h-9 rounded text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <a href="/predict" class="hidden md:inline bg-primary text-on-primary px-3 py-1.5 rounded font-label-md text-label-md hover:opacity-90 transition-opacity">Predict</a>
+    </div>
+  </div>
+  <div id="mobile-menu" class="hidden md:hidden bg-surface-container-lowest border-t border-outline-variant">
+    <div class="px-margin py-sm flex flex-col gap-xs max-w-[1200px] mx-auto">
+      {% for key, label in nav.items() %}
+      <a href="/{{ key }}" class="{% if active == key %}text-primary font-semibold{% else %}text-on-surface-variant hover:text-primary transition-colors{% endif %} font-body-md text-body-md py-2 border-b border-surface-variant/50 last:border-0">{{ label }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</nav>
+
+<main id="main" class="flex-grow pt-[88px] pb-xl px-margin max-w-[1200px] w-full mx-auto">
+{% block content %}{% endblock %}
+</main>
+
+<footer class="bg-surface-container border-t border-outline-variant w-full mt-auto">
+  <div class="w-full py-lg px-margin flex flex-col md:flex-row justify-between items-center gap-md max-w-[1200px] mx-auto">
+    <span class="font-headline-sm text-headline-sm font-bold text-primary">SpecPrice</span>
+    <span class="font-label-md text-label-md text-secondary">© 2026 SpecPrice Intelligence. All rights reserved.</span>
+    <div class="flex gap-md">
+      <a href="/predict" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline transition-all">Predict</a>
+      <a href="/advisor" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline transition-all">Buy Advisor</a>
+      <a href="/compare" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline transition-all">Compare</a>
+      <a href="/methodology" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline transition-all">Methodology</a>
+      <a href="/insights" class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:underline transition-all">Model Insights</a>
+    </div>
+  </div>
+</footer>
+<script>
+(function () {
+  var btn = document.getElementById("menu-btn");
+  var menu = document.getElementById("mobile-menu");
+  var icon = btn && btn.querySelector(".material-symbols-outlined");
+  function closeMenu() {
+    menu.classList.add("hidden");
+    btn.setAttribute("aria-expanded", "false");
+    btn.setAttribute("aria-label", "Open menu");
+    if (icon) icon.textContent = "menu";
+  }
+  if (btn && menu) {
+    btn.addEventListener("click", function () {
+      var nowHidden = menu.classList.toggle("hidden");
+      var open = !nowHidden;
+      btn.setAttribute("aria-expanded", String(open));
+      btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+      if (icon) icon.textContent = open ? "close" : "menu";
+    });
+    menu.addEventListener("click", function (e) {
+      if (e.target && e.target.tagName === "A") closeMenu();
+    });
+  }
+  window.addEventListener("resize", function () {
+    if (window.innerWidth >= 768 && menu && !menu.classList.contains("hidden")) closeMenu();
+  });
+})();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

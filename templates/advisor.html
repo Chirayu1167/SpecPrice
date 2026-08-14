@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% block title %}SpecPrice - Buy Advisor{% endblock %}
+{% block content %}
+<div class="mb-lg">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Buy Advisor</h1>
+  <p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl">A transparent buying heuristic based on price position and known sale periods.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+  <div class="lg:col-span-4 flex flex-col gap-lg">
+    <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-md pb-xs border-b border-surface-variant">Device Specs</h3>
+      <div class="flex flex-col gap-md">
+        <div>
+          <label class="field-label" for="brand">Brand</label>
+          <select id="brand" name="brand" class="field">
+            {% for label in ["Samsung","Apple","Xiaomi","OnePlus","Google","Motorola","Realme","Poco","Vivo","Oppo","Honor","Infinix","IQOO","Nokia","Nothing","Redmi","Tecno","Asus","Sony","Huawei","Lava","Itel","CMF","HMD","Other"] %}
+            <option value="{{ label }}" {% if label == "Samsung" %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-md">
+          <div>
+            <label class="field-label" for="ram">RAM (GB)</label>
+            <input id="ram" class="field" type="number" min="1" max="32" value="12"/>
+          </div>
+          <div>
+            <label class="field-label" for="memory">Storage (GB)</label>
+            <select id="memory" class="field">
+              {% for s in [64,128,256,512,1024] %}<option value="{{ s }}" {% if s == 256 %}selected{% endif %}>{{ s }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="processor_speed">CPU (GHz)</label>
+            <input id="processor_speed" class="field" type="number" step="0.1" value="3.2"/>
+          </div>
+          <div>
+            <label class="field-label" for="cores">Cores</label>
+            <select id="cores" class="field">
+              {% for c in [4,6,8,10] %}<option value="{{ c }}" {% if c == 8 %}selected{% endif %}>{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="battery">Battery (mAh)</label>
+            <input id="battery" class="field" type="number" value="5000"/>
+          </div>
+          <div>
+            <label class="field-label" for="fast_charging">Charging (W)</label>
+            <input id="fast_charging" class="field" type="number" value="45"/>
+          </div>
+          <div>
+            <label class="field-label" for="rear_camera">Main Cam (MP)</label>
+            <input id="rear_camera" class="field" type="number" value="50"/>
+          </div>
+          <div>
+            <label class="field-label" for="front_camera">Front Cam (MP)</label>
+            <input id="front_camera" class="field" type="number" value="12"/>
+          </div>
+          <div>
+            <label class="field-label" for="screen_size">Screen (in)</label>
+            <input id="screen_size" class="field" type="number" step="0.1" value="6.7"/>
+          </div>
+          <div>
+            <label class="field-label" for="refresh_rate">Refresh (Hz)</label>
+            <select id="refresh_rate" class="field">
+              {% for r in [60,90,120,144] %}<option value="{{ r }}" {% if r == 120 %}selected{% endif %}>{{ r }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="field-label" for="processor_brand">Processor Brand</label>
+          <select id="processor_brand" class="field">
+            {% for label, val in [("Qualcomm Snapdragon","qualcomm"),("MediaTek Dimensity","dimensity"),("MediaTek Helio","mediatek"),("Google Tensor","google"),("Samsung Exynos","samsung"),("HiSilicon Kirin","hisilicon"),("Unisoc","unisoc"),("Unknown / Other","unknown")] %}
+            <option value="{{ val }}" {% if val == "qualcomm" %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="os">Operating System</label>
+          <select id="os" class="field">
+            {% for o in ["Android v17","Android v16","Android v15","Android v14","Android v13","Android v12","Android v11","Android v10","Android v9.0 (Pie)","HarmonyOS v6.1","HarmonyOS v5.1","HarmonyOS v4.2","iOS v27","iOS v26","iOS v18","iOS v17","iOS v16","iOS v15"] %}
+            <option value="{{ o }}" {% if o == "Android v15" %}selected{% endif %}>{{ o }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="charging_speed_type">Charging Type</label>
+          <select id="charging_speed_type" class="field">
+            <option value="Super Fast" selected>Super Fast</option>
+            <option value="Standard">Standard</option>
+          </select>
+        </div>
+        <div class="flex gap-lg flex-wrap">
+          <label class="flex items-center gap-sm cursor-pointer">
+            <input id="has_5g" type="checkbox" class="custom-checkbox" checked/>
+            <span class="font-body-md text-body-md text-on-surface">5G</span>
+          </label>
+          <label class="flex items-center gap-sm cursor-pointer">
+            <input id="has_nfc" type="checkbox" class="custom-checkbox" checked/>
+            <span class="font-body-md text-body-md text-on-surface">NFC</span>
+          </label>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="lg:col-span-8 flex flex-col gap-gutter">
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <div class="flex flex-col md:flex-row gap-md items-end mb-md">
+        <div class="flex-grow">
+          <label class="field-label" for="market_price">Current Market Price (₹)</label>
+          <input id="market_price" class="field font-data-mono" type="number" min="0" step="100" placeholder="e.g. 109999"/>
+        </div>
+        <button id="advise-btn" class="w-full md:w-auto bg-primary text-on-primary font-headline-sm text-headline-sm py-2 px-6 rounded hover:bg-surface-tint transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Get Advice</button>
+      </div>
+      <p id="market-hint" class="font-body-md text-body-md text-on-surface-variant">Enter the price you can actually buy the phone for today — the advisor compares it against the specification-based estimate.</p>
+      <p id="market-error" class="hidden font-body-md text-body-md text-error mt-1"></p>
+
+      <div id="advise-result" class="hidden scroll-mt-[88px] fade-up">
+        <div class="flex items-start justify-between mb-lg">
+          <div>
+            <div class="flex items-center gap-sm mb-1">
+              <span class="bg-surface-variant text-on-surface-variant font-label-sm text-label-sm px-2 py-0.5 rounded">Smartphone</span>
+              <span id="tier-chip" class="bg-surface-variant text-on-surface-variant font-label-sm text-label-sm px-2 py-0.5 rounded">Premium Tier</span>
+            </div>
+            <h2 id="device-title" class="font-headline-md text-headline-md text-on-surface">Your Phone</h2>
+            <p id="device-subtitle" class="text-sm text-on-surface-variant mt-1"></p>
+          </div>
+          <div id="verdict-badge"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-md mb-lg">
+          <div class="bg-surface border border-outline-variant rounded p-md flex flex-col justify-center">
+            <span class="font-label-md text-label-md text-on-surface-variant mb-1 uppercase tracking-wider">Current Market Price</span>
+            <div id="cur-price" class="font-data-mono text-data-mono text-xl text-on-surface">—</div>
+          </div>
+          <div class="bg-surface border border-outline-variant rounded p-md flex flex-col justify-center">
+            <span class="font-label-md text-label-md text-on-surface-variant mb-1 uppercase tracking-wider">SpecPrice Estimate</span>
+            <div id="est-value" class="font-data-mono text-data-mono text-xl text-on-surface">—</div>
+          </div>
+          <div id="var-card" class="border rounded p-md flex flex-col justify-center">
+            <span class="font-label-md text-label-md text-on-surface-variant mb-1 uppercase tracking-wider">Market vs Estimate</span>
+            <div id="variance" class="font-data-mono text-data-mono text-xl flex items-center gap-1">—</div>
+          </div>
+        </div>
+        <div id="gap-warning" class="hidden mb-lg p-md bg-[#fef3c7]/60 border border-[#f59e0b]/40 rounded flex gap-sm items-start">
+          <span class="material-symbols-outlined text-[#b45309] mt-0.5 text-[18px]">warning</span>
+          <p class="font-body-md text-body-md text-on-surface"></p>
+        </div>
+        <div id="reason-box" class="bg-surface-container-low border-l-4 p-md rounded-r">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2 flex items-center gap-2">
+            <span id="reason-icon" class="material-symbols-outlined">info</span>
+            Recommendation Reason
+          </h3>
+          <p id="reason-text" class="font-body-md text-body-md text-on-surface-variant"></p>
+        </div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant mt-md">This is a specification-based valuation, not a guaranteed price forecast. Retail prices also reflect discounts, launch age, brand positioning, retailer pricing, promotions and supply/demand.</p>
+      </div>
+    </div>
+
+    <div id="timeline-card" class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm hidden">
+      <div class="flex justify-between items-end mb-6">
+        <h3 class="font-headline-sm text-headline-sm text-on-surface">Expected Sale Windows</h3>
+        <span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-high px-2 py-1 rounded">Sale-season heuristic — not historical price forecasting</span>
+      </div>
+      <div class="relative pt-8 pb-4 px-4 w-full overflow-x-auto">
+        <div class="absolute top-1/2 left-4 right-4 h-0.5 bg-outline-variant -translate-y-1/2 z-0"></div>
+        <div id="timeline" class="flex justify-between items-center relative z-10 min-w-[600px]"></div>
+      </div>
+      <div id="target-note" class="bg-surface-container-low p-sm rounded border border-surface-variant font-body-md text-body-md text-on-surface-variant"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const fmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+const IN = n => "₹" + fmt.format(n);
+
+function num(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function payload() {
+  const p = {
+    brand: document.getElementById("brand").value,
+    ram: num("ram"), memory: num("memory"), processor_speed: num("processor_speed"),
+    cores: num("cores"), battery: num("battery"), fast_charging: num("fast_charging"),
+    rear_camera: num("rear_camera"), front_camera: num("front_camera"),
+    screen_size: num("screen_size"), refresh_rate: num("refresh_rate"),
+    processor_brand: document.getElementById("processor_brand").value,
+    os: document.getElementById("os").value,
+    charging_speed_type: document.getElementById("charging_speed_type").value,
+    has_5g: document.getElementById("has_5g").checked,
+    has_nfc: document.getElementById("has_nfc").checked,
+    has_ir: false
+  };
+  const mp = parseFloat(document.getElementById("market_price").value);
+  if (mp > 0) p.market_price = mp;
+  return p;
+}
+
+const TONES = {
+  green: { text: "text-good", bg: "bg-good-bg", border: "border-good/20" },
+  amber: { text: "text-[#b45309]", bg: "bg-[#fef3c7]", border: "border-[#f59e0b]/30" },
+  red: { text: "text-error", bg: "bg-error-container", border: "border-error/20" }
+};
+
+async function advise() {
+  const btn = document.getElementById("advise-btn");
+  const marketEl = document.getElementById("market_price");
+  const marketVal = parseFloat(marketEl.value);
+  if (!(marketVal > 0)) {
+    document.getElementById("market-error").textContent = "Enter the current market price first.";
+    document.getElementById("market-error").classList.remove("hidden");
+    marketEl.focus();
+    return;
+  }
+  document.getElementById("market-error").classList.add("hidden");
+  btn.disabled = true; btn.textContent = "Analyzing…";
+  try {
+    const res = await fetch("/api/advise", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload())
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error((d && d.error) || "Request failed");
+    const tone = TONES[d.verdict.tone];
+    document.getElementById("advise-result").classList.remove("hidden");
+    document.getElementById("timeline-card").classList.remove("hidden");
+    document.getElementById("advise-result").scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("tier-chip").textContent = d.tier + " Tier";
+    document.getElementById("device-title").textContent = d.brand + " — " + d.ram + "GB/" + d.memory + "GB";
+    document.getElementById("device-subtitle").textContent =
+      `${d.processor_speed} GHz · ${d.cores} cores · ${d.rear_camera}MP · ${d.battery} mAh · ${d.screen_size}" ${d.refresh_rate}Hz`;
+    document.getElementById("cur-price").textContent = IN(d.market_price);
+    document.getElementById("est-value").textContent = IN(d.price);
+    const v = document.getElementById("variance");
+    v.textContent = (d.variance_pct > 0 ? "+" : "") + d.variance_pct + "%";
+    const vc = document.getElementById("var-card");
+    vc.className = "border rounded p-md flex flex-col justify-center " + (d.variance_pct > 0 ? "bg-error-container/30 border-error-container" : "bg-good-bg border-good/30");
+    v.className = "font-data-mono text-data-mono text-xl flex items-center gap-1 " + tone.text;
+    v.innerHTML = `<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">${d.variance_pct > 0 ? "trending_up" : "trending_down"}</span> ${(d.variance_pct > 0 ? "+" : "") + d.variance_pct}%`;
+    document.getElementById("verdict-badge").innerHTML =
+      `<div class="inline-flex items-center justify-center ${tone.bg} ${tone.text} px-4 py-2 rounded-md font-headline-sm text-headline-sm border ${tone.border}">${d.verdict.label}</div>`;
+    document.getElementById("reason-text").textContent = d.reason;
+    const icon = document.getElementById("reason-icon");
+    icon.textContent = d.verdict.emoji;
+    icon.className = "material-symbols-outlined " + tone.text;
+    document.getElementById("reason-box").className =
+      "bg-surface-container-low border-l-4 p-md rounded-r " + (d.variance_pct > 0 ? "border-error" : "border-good");
+    const gw = document.getElementById("gap-warning");
+    if (d.gap_warning) {
+      gw.querySelector("p").textContent = d.gap_warning;
+      gw.classList.remove("hidden");
+    } else {
+      gw.classList.add("hidden");
+    }
+    document.getElementById("target-note").innerHTML =
+      `<b>Target:</b> ${d.best_window} (in ~${d.weeks_until} weeks) at ₹${fmt.format(d.target_price)} — ${d.best_window === "Diwali / Festive Week" ? "typically the deepest discount window of the year." : "the best expected price in the next 12 months."}`;
+
+    const tl = document.getElementById("timeline");
+    tl.innerHTML = d.timeline.map((t, i) => {
+      const nodeSize = t.is_now ? "w-4 h-4" : (t.target ? "w-5 h-5" : "w-3 h-3");
+      const dotColor = t.is_now ? "bg-error" : (t.target ? "bg-primary border-4" : "bg-outline");
+      const nameCls = t.target ? "text-primary font-bold" : (t.is_now ? "text-on-surface" : "text-on-surface-variant");
+      const priceCls = t.target ? "text-primary font-bold" : "text-on-surface-variant";
+      const inner = t.target
+        ? `<span class="material-symbols-outlined text-on-primary" style="font-size:12px;font-variation-settings:'FILL' 1;">star</span>`
+        : "";
+      return `<div class="flex flex-col items-center group">
+        <div class="font-label-md text-label-md ${nameCls} mb-2 group-hover:-translate-y-1 transition-transform text-center px-1">${t.name}</div>
+        <div class="${nodeSize} rounded-full ${dotColor} border-2 border-surface-container-lowest shadow-sm z-10 flex items-center justify-center">${inner}</div>
+        <div class="mt-2 font-data-mono text-xs ${priceCls}">${t.is_now ? IN(t.price) : "Est: " + IN(t.price)}</div>
+        <div class="mt-1 font-label-sm text-label-sm text-on-surface-variant">${new Date(t.date).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}</div>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    document.getElementById("advise-result").classList.add("hidden");
+    document.getElementById("timeline-card").classList.add("hidden");
+    const me = document.getElementById("market-error");
+    me.textContent = "Advice failed: " + e.message;
+    me.classList.remove("hidden");
+    document.getElementById("market_price").focus();
+  } finally {
+    btn.disabled = false; btn.textContent = "Get Advice";
+  }
+}
+document.getElementById("advise-btn").addEventListener("click", advise);
+const _me = document.getElementById("market_price");
+_me.addEventListener("input", () => {
+  const ok = parseFloat(_me.value) > 0;
+  document.getElementById("advise-btn").disabled = !ok;
+  document.getElementById("market-hint").classList.toggle("hidden", ok);
+  if (ok) document.getElementById("market-error").classList.add("hidden");
+  else document.getElementById("market-error").classList.add("hidden");
+});
+</script>
+{% endblock %}

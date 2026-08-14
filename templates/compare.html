@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}SpecPrice - Compare{% endblock %}
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-lg gap-md">
+  <div>
+    <h1 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Compare estimates with market prices</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">The SpecPrice estimate reflects the typical value of a phone's specifications. Market prices also reflect discounts, launch age, brand positioning, retailer pricing, promotions and supply/demand — so a gap does not mean the model is wrong.</p>
+  </div>
+  <div class="flex bg-surface-container-low border border-outline-variant rounded p-1 h-10 items-center" role="group" aria-label="Sort devices by price">
+    <button id="sort-market" class="px-3 py-1 bg-surface-container-lowest shadow-sm rounded text-primary font-label-md text-label-md whitespace-nowrap" aria-pressed="true">Market price</button>
+    <button id="sort-estimate" class="px-3 py-1 text-on-surface-variant hover:text-on-surface font-label-md text-label-md whitespace-nowrap transition-colors" aria-pressed="false">Estimated price</button>
+  </div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-surface-container border-b border-outline-variant">
+          <th class="py-3 px-sm font-label-md text-label-md text-on-surface-variant w-1/4">Phone Model</th>
+          <th class="py-3 px-sm font-label-md text-label-md text-on-surface-variant text-right">SpecPrice Estimate</th>
+          <th class="py-3 px-sm font-label-md text-label-md text-on-surface-variant text-right">Market · Amazon (IN)</th>
+          <th class="py-3 px-sm font-label-md text-label-md text-on-surface-variant text-right">Market · Flipkart (IN)</th>
+          <th class="py-3 px-sm font-label-md text-label-md text-on-surface-variant text-right">Market vs Estimate</th>
+          <th class="py-3 px-sm font-label-md text-label-md text-on-surface-variant">Best Price Platform</th>
+        </tr>
+      </thead>
+      <tbody id="compare-body" class="font-data-mono text-data-mono text-on-surface divide-y divide-outline-variant">
+        <tr><td colspan="6" class="py-8 text-center text-on-surface-variant">Loading model predictions…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="bg-surface-container-lowest border-t border-outline-variant px-md py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-xs">
+    <span class="font-body-md text-body-md text-on-surface-variant" id="compare-count">Predictions by the XGBoost model</span>
+    <span class="font-label-sm text-label-sm text-on-surface-variant">Amazon/Flipkart figures are reference market prices (demo data) — not live prices.</span>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const fmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+const IN = n => "₹" + fmt.format(n);
+
+let devices = [];
+let sortKey = "market";
+
+const SORT_LABELS = { market: "market price", estimate: "estimated price" };
+
+function rowHtml(dev) {
+  const below = dev.diff_pct <= 0;
+  const badge = below
+    ? `<div class="inline-flex items-center justify-end text-good bg-good-bg px-2 py-0.5 rounded gap-1"><span class="material-symbols-outlined text-[14px]">arrow_downward</span><span>${Math.abs(dev.diff_pct)}%</span></div>`
+    : `<div class="inline-flex items-center justify-end text-bad bg-bad-bg px-2 py-0.5 rounded gap-1"><span class="material-symbols-outlined text-[14px]">arrow_upward</span><span>${dev.diff_pct}%</span></div>`;
+  const plat = dev.best === "Parity"
+    ? `<div class="flex items-center gap-xs"><span class="material-symbols-outlined text-[16px] text-on-surface-variant">balance</span><span class="font-body-md text-body-md">Parity</span></div>`
+    : `<div class="flex items-center gap-xs"><span class="material-symbols-outlined text-[16px] text-primary">storefront</span><span class="font-body-md text-body-md">${dev.best}</span></div>`;
+  return `<tr class="table-row-hover transition-colors">
+    <td class="py-3 px-sm">
+      <div class="flex items-center gap-sm">
+        <span class="font-body-md text-body-md font-semibold text-on-surface">${dev.name}</span>
+        <span class="bg-[#E9ECEF] text-on-surface-variant px-1.5 py-0.5 rounded font-label-sm text-label-sm">${dev.tag}</span>
+      </div>
+      <div class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">${dev.ram}GB · ${dev.memory}GB · ${dev.rear_camera}MP · ${dev.battery}mAh</div>
+    </td>
+    <td class="py-3 px-sm text-right text-on-surface-variant">${IN(dev.predicted)}</td>
+    <td class="py-3 px-sm text-right ${dev.best === "Amazon" ? "font-medium" : ""}">${IN(dev.amazon)}</td>
+    <td class="py-3 px-sm text-right ${dev.best === "Flipkart" ? "font-medium" : ""}">${IN(dev.flipkart)}</td>
+    <td class="py-3 px-sm text-right">${badge}</td>
+    <td class="py-3 px-sm">${plat}</td>
+  </tr>`;
+}
+
+function render() {
+  const sortFn = sortKey === "estimate"
+    ? (a, b) => a.predicted - b.predicted
+    : (a, b) => Math.min(a.amazon, a.flipkart) - Math.min(b.amazon, b.flipkart);
+  const rows = [...devices].sort(sortFn).map(rowHtml).join("");
+  document.getElementById("compare-body").innerHTML = rows;
+  document.getElementById("compare-count").textContent =
+    `Showing ${devices.length} sample devices · sorted by ${SORT_LABELS[sortKey]} (lowest first)`;
+}
+
+function setSort(key) {
+  sortKey = key;
+  document.getElementById("sort-market").setAttribute("aria-pressed", String(key === "market"));
+  document.getElementById("sort-estimate").setAttribute("aria-pressed", String(key === "estimate"));
+  for (const [id, k] of [["sort-market", "market"], ["sort-estimate", "estimate"]]) {
+    const on = k === key;
+    document.getElementById(id).className = "px-3 py-1 rounded font-label-md text-label-md whitespace-nowrap transition-colors " +
+      (on ? "bg-surface-container-lowest shadow-sm text-primary" : "text-on-surface-variant hover:text-on-surface");
+  }
+  render();
+}
+
+async function load() {
+  try {
+    const res = await fetch("/api/compare");
+    const d = await res.json();
+    devices = d.devices;
+    render();
+  } catch (e) {
+    document.getElementById("compare-body").innerHTML = `<tr><td colspan="6" class="py-8 text-center text-error">Failed to load: ${e.message}</td></tr>`;
+  }
+}
+
+document.getElementById("sort-market").addEventListener("click", () => setSort("market"));
+document.getElementById("sort-estimate").addEventListener("click", () => setSort("estimate"));
+load();
+</script>
+{% endblock %}

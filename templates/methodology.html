@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}SpecPrice - Methodology & Dataset{% endblock %}
+{% block content %}
+<div class="mb-lg">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Methodology & Dataset</h1>
+  <p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl">How the price estimate is produced, what the dataset covers, and what the model can and cannot tell you.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+  <div class="lg:col-span-7 flex flex-col gap-gutter">
+    <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 border-b border-outline-variant pb-2">What SpecPrice predicts</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant">SpecPrice estimates the typical price associated with a phone's technical specifications, based on patterns learned from the 2026 dataset.</p>
+      <div class="mt-md p-sm bg-surface-container-low rounded border border-surface-variant">
+        <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">What it does not predict</h3>
+        <p class="font-body-md text-body-md text-on-surface-variant">It is not a live retail-price tracker and does not directly account for temporary discounts, retailer offers, launch age, supply/demand, or every model-specific pricing factor.</p>
+      </div>
+      <div class="mt-md">
+        <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Why estimates can differ from retail prices</h3>
+        <p class="font-body-md text-body-md text-on-surface-variant">Two phones with similar specifications can have very different prices because brand positioning, software support, design, processor generation, launch timing, and market strategy also affect pricing.</p>
+      </div>
+    </section>
+
+    <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 border-b border-outline-variant pb-2">Training Pipeline</h3>
+      <ol class="list-decimal list-inside flex flex-col gap-md font-body-md text-body-md text-on-surface-variant">
+        <li><b class="text-on-surface">Dataset collection:</b> smartphone listings with hardware specifications and launch/market prices (2026 vintage, India market, INR).</li>
+        <li><b class="text-on-surface">Feature engineering:</b> numeric specs (RAM, storage, battery, camera, display), ratio features (charging watts per mAh), and one-hot encodings for brand, processor brand, OS, and charging class — 85 features in total.</li>
+        <li><b class="text-on-surface">Target transform:</b> the model regresses on log(price) to keep premium-segment errors proportionate; estimates are exponentiated back to INR (<code>price = exp(model.predict(X))</code>).</li>
+        <li><b class="text-on-surface">Missing values:</b> handled natively by XGBoost's missing-value branches. The app fills unknown inputs with representative defaults rather than fabricating values.</li>
+        <li><b class="text-on-surface">Model:</b> XGBoost regressor with 300 trees, max depth 5, trained with early stopping on a holdout split.</li>
+        <li><b class="text-on-surface">Deployment:</b> the trained model and its column schema are serialized into the two <code>.pkl</code> artifacts loaded by this web app. On startup the app verifies the 85-column schema matches the model's trained feature order exactly.</li>
+      </ol>
+    </section>
+
+    <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 border-b border-outline-variant pb-2">Feature Catalog</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+        {% for cat, feats in [
+          ("Numeric", ["RAM (GB)", "Storage (GB)", "Processor speed (GHz)", "Core count", "Battery (mAh)", "Fast charging (W)", "Charging ratio", "Screen size (in)", "Refresh rate (Hz)", "Rear / front camera (MP)", "Rear camera count"]),
+          ("Structural", ["5G support", "NFC", "IR blaster"]),
+          ("One-hot", ["Brand (25+)", "Processor brand (Snapdragon, Dimensity, Tensor, Exynos, Kirin, Unisoc…)", "OS (Android / HarmonyOS / iOS)", "Charging speed type"])
+        ] %}
+        <div>
+          <h4 class="font-label-md text-label-md text-on-surface-variant uppercase mb-2">{{ cat }}</h4>
+          <div class="flex flex-wrap gap-xs">
+            {% for f in feats %}<span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-sm font-label-sm text-label-sm">{{ f }}</span>{% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div class="lg:col-span-5 flex flex-col gap-gutter">
+    <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 border-b border-outline-variant pb-2">The Buy Advisor</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant">The advisor compares the current market price you enter against the specification-based estimate:</p>
+      <div class="flex flex-col gap-sm mt-3">
+        <div class="flex items-center gap-sm">
+          <span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-good-bg text-good border border-good/20 whitespace-nowrap">BUY NOW</span>
+          <span class="font-body-md text-body-md text-on-surface-variant">Market price ≥2% below estimate — strong deal.</span>
+        </div>
+        <div class="flex items-center gap-sm">
+          <span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-[#fef3c7] text-[#b45309] border border-[#f59e0b]/30 whitespace-nowrap">GOOD TIME</span>
+          <span class="font-body-md text-body-md text-on-surface-variant">Price within ±2–5% — fair value.</span>
+        </div>
+        <div class="flex items-center gap-sm">
+          <span class="px-2 py-0.5 rounded font-label-sm text-label-sm bg-error-container text-error border border-error/20 whitespace-nowrap">WAIT</span>
+          <span class="font-body-md text-body-md text-on-surface-variant">Price &gt;5% above estimate — target a seasonal sale window, where 5–11% drops are typical.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-3 border-b border-outline-variant pb-2">Caveats</h3>
+      <ul class="flex flex-col gap-sm font-body-md text-body-md text-on-surface-variant list-disc list-inside">
+        <li>Sale-window estimates are a seasonal heuristic (Republic Day, festive week, Big Billion Days, Black Friday, year-end), not price forecasting.</li>
+        <li>Ultra-premium estimates (&gt;₹1,00,000) are less reliable due to sparse dataset coverage.</li>
+        <li>Estimates reflect hardware value in the training market; brand positioning and launch hype are captured only indirectly through the brand encoding.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

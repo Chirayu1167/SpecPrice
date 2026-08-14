@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}SpecPrice - Model Insights{% endblock %}
+{% block content %}
+<div class="mb-lg">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Model Insights</h1>
+  <p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl">Global feature importance and configuration for the deployed price estimation model. Feature importance is computed from the trained model — it is read-only and cannot be influenced by the app.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+  <div class="lg:col-span-4 flex flex-col gap-gutter">
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-4 border-b border-outline-variant pb-2">Model Configuration</h3>
+      <div id="model-config" class="flex flex-col gap-sm text-on-surface-variant font-body-md text-body-md">
+        Loading…
+      </div>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">How to read this</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant">"Gain" measures how much a feature reduced prediction error, summed across all trees and normalized. The higher the share, the more the model relies on that feature to set a price.</p>
+      <div class="mt-md p-sm bg-surface-container-low rounded border border-surface-variant">
+        <p class="font-body-md text-body-md text-on-surface-variant"><b class="text-on-surface">Global vs per-prediction:</b> these bars show the model's overall reliance on each feature. The Predict page instead shows how the same features moved <i>your specific</i> estimate (per-prediction contributions).</p>
+      </div>
+    </div>
+  </div>
+  <div class="lg:col-span-8 flex flex-col gap-gutter">
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-4 border-b border-outline-variant pb-2">Which spec areas drive price</h3>
+      <div id="groups" class="flex flex-col gap-md"></div>
+    </div>
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <h3 class="font-headline-sm text-headline-sm text-on-surface mb-4 border-b border-outline-variant pb-2">Top Features by Gain</h3>
+      <div id="importance" class="flex flex-col gap-md"></div>
+    </div>
+  </div>
+</div>
+
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm mt-gutter">
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-md">
+    <div>
+      <h3 class="font-headline-sm text-headline-sm text-on-surface">All {{ num_features|default("85") }} features, ranked</h3>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-1">Full model feature list ordered by gain. Feature names match the trained column schema.</p>
+    </div>
+    <button id="toggle-all" class="bg-surface-container-lowest text-primary border border-outline-variant px-3 py-1.5 rounded font-label-md text-label-md hover:bg-surface-container-low transition-colors" aria-expanded="false">
+      Show all features
+    </button>
+  </div>
+  <div id="all-features" class="hidden mt-md">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-xs">
+      <div id="all-features-list" class="flex flex-col gap-xs"></div>
+    </div>
+    <p class="font-label-sm text-label-sm text-on-surface-variant mt-md">Percentages are rounded; very small shares may round to 0%.</p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const LABELS = {
+  "has_5G": "5G support", "has_NFC": "NFC", "has_IR": "IR blaster",
+  "num_core": "Core count", "processor_speed": "Processor speed (GHz)",
+  "processor_name_freq": "Processor name frequency", "ram": "RAM (GB)",
+  "memory": "Storage (GB)", "battery_capacity(mAh)": "Battery (mAh)",
+  "fast_charging(W)": "Fast charging (W)", "charging_ratio": "Charging ratio (W/mAh)",
+  "screen_size": "Screen size (in)", "refresh_rate": "Refresh rate (Hz)",
+  "rear_camera": "Rear camera (MP)", "front_camera": "Front camera (MP)",
+  "rear_camera_count": "Rear camera count"
+};
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function label(name) {
+  if (name.startsWith("brand_name_")) {
+    const b = name.slice(11);
+    return "Brand · " + (b === "samaung" ? "Samsung" : cap(b));
+  }
+  if (name.startsWith("processor_brand_")) return "Chipset · " + cap(name.slice(16));
+  if (name.startsWith("charging_speed_type_")) return "Charging · " + name.slice(20);
+  if (name.startsWith("os_")) {
+    return "OS · " + name.slice(3).replace("Android v", "Android ").replace("iOS v", "iOS ").replace("HarmonyOS v", "HarmonyOS ");
+  }
+  return LABELS[name] || name.replace(/_/g, " ");
+}
+
+const GROUP_ICONS = {
+  "Processor": "memory", "RAM": "developer_board", "Brand": "storefront",
+  "Storage": "storage", "Camera": "photo_camera", "Battery & Charging": "battery_charging_full",
+  "Display": "display_settings", "Connectivity": "network_check", "OS": "smartphone"
+};
+
+function barRow(rank, name, pct, gain, nameWidth) {
+  return `<div class="flex items-center gap-sm" title="Gain: ${gain}">
+    ${rank ? `<span class="font-data-mono text-data-mono text-on-surface-variant w-6 text-right text-xs">${rank}</span>` : ""}
+    <span class="font-label-sm text-label-sm text-on-surface w-${nameWidth} text-right">${name}</span>
+    <div class="flex-grow h-2 bg-surface-container rounded-full overflow-hidden">
+      <div class="h-full bg-primary rounded-full" style="width:${pct}%"></div>
+    </div>
+    <span class="font-data-mono text-data-mono w-14 text-left">${pct}%</span>
+  </div>`;
+}
+
+function renderGroups(groups) {
+  const max = groups[0].pct || 1;
+  document.getElementById("groups").innerHTML = groups.map(g =>
+    `<div class="flex items-center gap-sm" title="Gain: ${g.gain}">
+      <span class="material-symbols-outlined text-primary text-[20px] w-6">${GROUP_ICONS[g.label] || "query_stats"}</span>
+      <span class="font-body-md text-body-md text-on-surface w-40">${g.label}</span>
+      <div class="flex-grow h-3 bg-surface-container rounded-full overflow-hidden">
+        <div class="h-full bg-primary rounded-full" style="width:${Math.round(100 * g.pct / max)}%"></div>
+      </div>
+      <span class="font-data-mono text-data-mono w-14 text-left">${g.pct}%</span>
+    </div>`).join("");
+}
+
+async function load() {
+  try {
+    const res = await fetch("/api/insights");
+    const d = await res.json();
+    document.getElementById("model-config").innerHTML = [
+      ["Algorithm", d.model],
+      ["Trees", d.trees],
+      ["Max depth", d.max_depth],
+      ["Learning rate", d.learning_rate],
+      ["Input features", d.num_features],
+      ["Target", d.target]
+    ].map(([k, v]) => `<div class="flex justify-between items-center border-b border-outline-variant/50 pb-2">
+        <span class="text-on-surface-variant">${k}</span>
+        <span class="font-data-mono text-data-mono bg-surface-variant px-2 py-0.5 rounded text-xs">${v}</span>
+      </div>`).join("");
+    renderGroups(d.groups);
+    document.getElementById("importance").innerHTML = d.features.map((f, i) =>
+      barRow(i + 1, label(f.name), f.pct, f.gain, "52")).join("");
+    document.getElementById("all-features-list").innerHTML = d.all_features.map((f, i) =>
+      `<div class="flex items-center gap-sm" title="Gain: ${f.gain}">
+        <span class="font-data-mono text-data-mono text-on-surface-variant w-6 text-right text-xs">${i + 1}</span>
+        <span class="font-data-mono text-data-mono text-on-surface flex-grow truncate">${label(f.name)}</span>
+        <span class="font-data-mono text-data-mono text-on-surface-variant w-14 text-right">${f.pct}%</span>
+        <span class="font-label-sm text-label-sm text-on-surface-variant w-16 text-right">gain ${f.gain}</span>
+      </div>`).join("");
+  } catch (e) {
+    document.getElementById("importance").textContent = "Failed to load: " + e.message;
+    document.getElementById("groups").textContent = "Failed to load: " + e.message;
+  }
+}
+
+const toggleBtn = document.getElementById("toggle-all");
+toggleBtn.addEventListener("click", () => {
+  const list = document.getElementById("all-features");
+  const open = list.classList.toggle("hidden") === false;
+  toggleBtn.setAttribute("aria-expanded", String(open));
+  toggleBtn.textContent = open ? "Hide all features" : "Show all features";
+});
+
+load();
+</script>
+{% endblock %}

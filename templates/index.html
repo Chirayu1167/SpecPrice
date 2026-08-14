@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}SpecPrice: Estimate what a smartphone is worth from its hardware{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-margin">
+  <div class="lg:col-span-5 flex flex-col justify-center">
+    <h1 class="font-headline-lg text-headline-lg text-on-background mb-sm">Estimate market value from a smartphone's hardware.</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mb-lg">SpecPrice estimates what a phone's specifications are typically worth in our 2026 dataset — so you can judge whether a retail price is reasonable.</p>
+    <div class="flex flex-col sm:flex-row gap-sm">
+      <a href="/predict" class="bg-primary text-on-primary px-[16px] py-[8px] rounded border border-primary font-label-md text-label-md hover:opacity-90 transition-opacity">Try the Price Predictor</a>
+      <a href="/advisor" class="bg-surface-container-lowest text-on-surface px-[16px] py-[8px] rounded border border-outline-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">Ask the Buy Advisor</a>
+    </div>
+  </div>
+  <div class="lg:col-span-7 flex flex-col justify-center">
+    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-margin shadow-sm">
+      <div class="flex justify-between items-start mb-md border-b border-surface-variant pb-sm">
+        <div>
+          <h2 class="font-headline-sm text-headline-sm text-on-background">Xiaomi Redmi Note 14 Pro</h2>
+          <div class="flex flex-wrap gap-xs mt-xs">
+            <span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-sm font-label-sm text-label-sm">8 GB RAM</span>
+            <span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-sm font-label-sm text-label-sm">MediaTek processor</span>
+            <span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-sm font-label-sm text-label-sm">128 GB</span>
+            <span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-sm font-label-sm text-label-sm">200 MP</span>
+            <span class="bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-sm font-label-sm text-label-sm">5500 mAh</span>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-sm mb-lg">
+        <div>
+          <p class="font-label-md text-label-md text-on-surface-variant mb-xs">SpecPrice estimate</p>
+          <p id="home-estimate" class="font-data-mono text-data-mono text-on-background">…</p>
+        </div>
+        <div>
+          <p class="font-label-md text-label-md text-on-surface-variant mb-xs">Reference market price</p>
+          <p class="font-data-mono text-data-mono text-on-background">₹24,999</p>
+        </div>
+        <div>
+          <p class="font-label-md text-label-md text-on-surface-variant mb-xs">Difference</p>
+          <p id="home-variance" class="font-data-mono text-data-mono text-on-background">…</p>
+        </div>
+      </div>
+      <div class="mb-lg">
+        <div class="flex items-center text-sm mb-2">
+          <span class="font-label-sm text-label-sm text-on-surface-variant w-[80px]">Estimate</span>
+          <div id="home-pred-bar" class="h-[2px] bg-primary flex-grow mx-sm"></div>
+          <span id="home-pred-txt" class="font-data-mono text-data-mono text-primary w-[70px] text-right">…</span>
+        </div>
+        <div class="flex items-center text-sm">
+          <span class="font-label-sm text-label-sm text-on-surface-variant w-[80px]">Market</span>
+          <div id="home-launch-bar" class="h-[2px] bg-outline-variant flex-grow mx-sm relative"></div>
+          <span class="font-data-mono text-data-mono text-on-surface-variant w-[70px] text-right">₹25K</span>
+        </div>
+      </div>
+      <div id="home-note" class="bg-surface-container-low p-sm rounded border border-surface-variant">
+        <p class="font-body-md text-body-md text-on-background flex items-center gap-sm">
+          <span class="material-symbols-outlined">info</span>
+          Loading live model estimate…
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-md mt-lg">
+  <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm">
+    <span class="material-symbols-outlined text-primary mb-xs block text-[20px]">model_training</span>
+    <p class="font-label-md text-label-md text-on-surface-variant mb-xs">Model</p>
+    <p class="font-data-mono text-data-mono text-on-surface">XGBoost · 300 trees</p>
+  </div>
+  <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm">
+    <span class="material-symbols-outlined text-primary mb-xs block text-[20px]">tune</span>
+    <p class="font-label-md text-label-md text-on-surface-variant mb-xs">Input features</p>
+    <p class="font-data-mono text-data-mono text-on-surface">85 spec features</p>
+  </div>
+  <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm">
+    <span class="material-symbols-outlined text-primary mb-xs block text-[20px]">dataset</span>
+    <p class="font-label-md text-label-md text-on-surface-variant mb-xs">Dataset</p>
+    <p class="font-data-mono text-data-mono text-on-surface">2026 · India market</p>
+  </div>
+  <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm">
+    <span class="material-symbols-outlined text-primary mb-xs block text-[20px]">currency_rupee</span>
+    <p class="font-label-md text-label-md text-on-surface-variant mb-xs">Estimates</p>
+    <p class="font-data-mono text-data-mono text-on-surface">INR · exp-transformed</p>
+  </div>
+</div>
+
+<div class="mt-lg flex flex-wrap items-center gap-md font-body-md text-body-md">
+  <a href="/methodology" class="text-primary hover:underline inline-flex items-center gap-xs">How the estimate is produced<span class="material-symbols-outlined text-[16px]">arrow_forward</span></a>
+  <a href="/insights" class="text-on-surface-variant hover:text-primary transition-colors inline-flex items-center gap-xs">Model feature importance</a>
+  <a href="/compare" class="text-on-surface-variant hover:text-primary transition-colors inline-flex items-center gap-xs">Retail price comparison</a>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const fmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+
+async function load() {
+  try {
+    const res = await fetch("/api/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        brand: "Xiaomi", ram: 8, processor_speed: 2.5, cores: 8, processor_brand: "mediatek",
+        memory: 128, battery: 5500, fast_charging: 45, rear_camera: 200, front_camera: 20,
+        rear_camera_count: 3, screen_size: 6.67, refresh_rate: 120, os: "Android v14",
+        charging_speed_type: "Super Fast", has_5g: true, has_nfc: true, has_ir: false
+      })
+    });
+    const d = await res.json();
+    const market = 24999;
+    const diffPct = (d.price - market) / market * 100;
+    document.getElementById("home-estimate").textContent = "₹" + fmt.format(d.price);
+    document.getElementById("home-pred-txt").textContent = "₹" + Math.round(d.price / 100) / 10 + "K";
+    document.getElementById("home-pred-bar").style.width = Math.min(100, (d.price / market) * 100) + "%";
+    document.getElementById("home-launch-bar").style.width = "100%";
+    const v = document.getElementById("home-variance");
+    v.textContent = (diffPct > 0 ? "+" : "−") + Math.abs(diffPct).toFixed(1) + "%";
+    v.className = "font-data-mono text-data-mono " + (Math.abs(diffPct) > 10 ? "text-error" : "text-good");
+    const note = document.getElementById("home-note");
+    if (Math.abs(diffPct) <= 10) {
+      note.innerHTML = `<p class="font-body-md text-body-md text-on-background flex items-center gap-sm">
+        <span class="material-symbols-outlined text-good">check_circle</span>
+        The model estimate is within ${Math.abs(diffPct).toFixed(1)}% of the reference market price.
+        Reference prices are demo figures — not live retail data.</p>`;
+    } else {
+      note.className = "bg-error-container/20 p-sm rounded border border-error-container";
+      note.innerHTML = `<p class="font-body-md text-body-md text-on-background flex items-center gap-sm">
+        <span class="material-symbols-outlined text-error">info</span>
+        The estimate differs materially from the reference market price — retail prices also reflect launch age, discounts and brand positioning.
+        Reference prices are demo figures — not live retail data.</p>`;
+    }
+  } catch (e) {
+    document.getElementById("home-note").innerHTML = `<p class="font-body-md text-body-md text-error">Failed to load: ${e.message}</p>`;
+  }
+}
+load();
+</script>
+{% endblock %}
