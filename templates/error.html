@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}SpecPrice - {{ title }}{% endblock %}
+{% block content %}
+<div class="flex flex-col items-center justify-center text-center py-xl">
+  <div class="w-16 h-16 rounded-lg bg-surface-container flex items-center justify-center mb-lg">
+    <span class="material-symbols-outlined text-4xl text-primary">error_outline</span>
+  </div>
+  <p class="font-data-mono text-data-mono text-primary mb-sm">{{ code }}</p>
+  <h1 class="font-headline-lg text-headline-lg text-on-surface mb-sm">{{ title }}</h1>
+  <p class="font-body-lg text-body-lg text-on-surface-variant max-w-md mb-lg">{{ message }}</p>
+  <div class="flex flex-col sm:flex-row gap-sm">
+    <a href="/" class="bg-primary text-on-primary px-[16px] py-[8px] rounded border border-primary font-label-md text-label-md hover:opacity-90 transition-opacity">Back to Home</a>
+    <a href="/predict" class="bg-surface-container-lowest text-on-surface px-[16px] py-[8px] rounded border border-outline-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors">Try the Price Predictor</a>
+  </div>
+</div>
+{% endblock %}

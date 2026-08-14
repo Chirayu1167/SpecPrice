@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+{% block title %}SpecPrice - Price Predictor{% endblock %}
+{% block content %}
+<div class="mb-md">
+  <h1 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Estimate market value from specifications</h1>
+  <p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl">A model-based estimate of what a phone with these specifications would typically be priced at in our 2026 dataset. Actual retail prices may differ.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-12 gap-margin">
+  <div class="col-span-1 md:col-span-8 flex flex-col gap-lg">
+    <form id="spec-form" class="flex flex-col gap-lg">
+      <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-lg shadow-sm">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface mb-md pb-xs border-b border-surface-variant">Device</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+          <div>
+            <label class="field-label" for="brand">Brand</label>
+            <select id="brand" name="brand" class="field">
+              {% for label in ["Samsung","Apple","Xiaomi","OnePlus","Google","Motorola","Realme","Poco","Vivo","Oppo","Honor","Infinix","IQOO","Nokia","Nothing","Redmi","Tecno","Asus","Sony","Huawei","Lava","Itel","CMF","HMD","Other"] %}
+              <option value="{{ label }}" {% if label == "Samsung" %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="model-name">Model (Optional)</label>
+            <input id="model-name" class="field" placeholder="e.g. Galaxy S25 Ultra" type="text"/>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-lg shadow-sm">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface mb-md pb-xs border-b border-surface-variant">Performance</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-md">
+          <div>
+            <label class="field-label" for="ram">RAM (GB)</label>
+            <input id="ram" name="ram" class="field font-data-mono" type="number" min="1" max="32" step="1" value="12"/>
+          </div>
+          <div>
+            <label class="field-label" for="processor_speed">Processor Max Boost (GHz)</label>
+            <input id="processor_speed" name="processor_speed" class="field font-data-mono" type="number" min="0.5" max="4.5" step="0.1" value="3.2"/>
+          </div>
+          <div>
+            <label class="field-label" for="cores">Cores</label>
+            <select id="cores" name="cores" class="field font-data-mono">
+              {% for c in [4,6,8,10] %}<option value="{{ c }}" {% if c == 8 %}selected{% endif %}>{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="processor_brand">Processor Brand</label>
+            <select id="processor_brand" name="processor_brand" class="field">
+              {% for label, val in [("Qualcomm Snapdragon","qualcomm"),("MediaTek Dimensity","dimensity"),("MediaTek Helio","mediatek"),("Google Tensor","google"),("Samsung Exynos","samsung"),("HiSilicon Kirin","hisilicon"),("Unisoc","unisoc"),("Unknown / Other","unknown")] %}
+              <option value="{{ val }}" {% if val == "qualcomm" %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-lg shadow-sm">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface mb-md pb-xs border-b border-surface-variant">Hardware</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-md">
+          <div>
+            <label class="field-label" for="memory">Storage (GB)</label>
+            <select id="memory" name="memory" class="field font-data-mono">
+              {% for s in [64,128,256,512,1024] %}<option value="{{ s }}" {% if s == 256 %}selected{% endif %}>{{ s }}</option>{% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="battery">Battery (mAh)</label>
+            <input id="battery" name="battery" class="field font-data-mono" type="number" min="1000" max="10000" step="10" value="5000"/>
+          </div>
+          <div>
+            <label class="field-label" for="fast_charging">Fast Charging (W)</label>
+            <input id="fast_charging" name="fast_charging" class="field font-data-mono" type="number" min="0" max="240" step="1" value="45"/>
+          </div>
+          <div>
+            <label class="field-label" for="rear_camera">Main Cam (MP)</label>
+            <input id="rear_camera" name="rear_camera" class="field font-data-mono" type="number" min="1" max="300" step="1" value="50"/>
+          </div>
+          <div>
+            <label class="field-label" for="front_camera">Front Cam (MP)</label>
+            <input id="front_camera" name="front_camera" class="field font-data-mono" type="number" min="1" max="100" step="1" value="12"/>
+          </div>
+          <div>
+            <label class="field-label" for="rear_camera_count">Rear Camera Count</label>
+            <select id="rear_camera_count" name="rear_camera_count" class="field font-data-mono">
+              {% for c in [1,2,3,4,5] %}<option value="{{ c }}" {% if c == 3 %}selected{% endif %}>{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-lg shadow-sm">
+          <h2 class="font-headline-sm text-headline-sm text-on-surface mb-md pb-xs border-b border-surface-variant">Display</h2>
+          <div class="grid grid-cols-2 gap-md">
+            <div>
+              <label class="field-label" for="screen_size">Size (in)</label>
+              <input id="screen_size" name="screen_size" class="field font-data-mono" type="number" min="3.5" max="8" step="0.1" value="6.7"/>
+            </div>
+            <div>
+              <label class="field-label" for="refresh_rate">Refresh (Hz)</label>
+              <select id="refresh_rate" name="refresh_rate" class="field font-data-mono">
+                {% for r in [60,90,120,144] %}<option value="{{ r }}" {% if r == 120 %}selected{% endif %}>{{ r }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+        </section>
+        <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-lg shadow-sm">
+          <h2 class="font-headline-sm text-headline-sm text-on-surface mb-md pb-xs border-b border-surface-variant">Software & Charging</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+            <div>
+              <label class="field-label" for="os">Operating System</label>
+              <select id="os" name="os" class="field">
+                {% for o in ["Android v17","Android v16","Android v15","Android v14","Android v13","Android v12","Android v11","Android v10","Android v9.0 (Pie)","HarmonyOS v6.1","HarmonyOS v5.1","HarmonyOS v4.2","iOS v27","iOS v26","iOS v18","iOS v17","iOS v16","iOS v15"] %}
+                <option value="{{ o }}" {% if o == "Android v15" %}selected{% endif %}>{{ o }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="charging_speed_type">Charging Type</label>
+              <select id="charging_speed_type" name="charging_speed_type" class="field">
+                <option value="Super Fast" selected>Super Fast</option>
+                <option value="Standard">Standard</option>
+              </select>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-lg shadow-sm">
+        <h2 class="font-headline-sm text-headline-sm text-on-surface mb-md pb-xs border-b border-surface-variant">Features</h2>
+        <div class="flex flex-wrap gap-lg">
+          <label class="flex items-center gap-sm cursor-pointer">
+            <input id="has_5g" type="checkbox" class="custom-checkbox" checked/>
+            <span class="font-body-md text-body-md text-on-surface">5G Connectivity</span>
+          </label>
+          <label class="flex items-center gap-sm cursor-pointer">
+            <input id="has_nfc" type="checkbox" class="custom-checkbox" checked/>
+            <span class="font-body-md text-body-md text-on-surface">NFC</span>
+          </label>
+          <label class="flex items-center gap-sm cursor-pointer">
+            <input id="has_ir" type="checkbox" class="custom-checkbox"/>
+            <span class="font-body-md text-body-md text-on-surface">IR Blaster</span>
+          </label>
+        </div>
+      </section>
+    </form>
+  </div>
+
+  <div class="col-span-1 md:col-span-4 flex flex-col gap-lg">
+    <section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden sticky top-[88px]">
+      <div class="p-lg bg-surface-container-low border-b border-surface-variant">
+        <h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-sm">Specification Summary</h3>
+        <div id="spec-chips" class="flex flex-wrap gap-xs mb-lg"></div>
+        <button id="update-btn" class="w-full bg-primary text-on-primary font-headline-sm text-headline-sm py-2 px-4 rounded hover:bg-surface-tint transition-colors focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none disabled:opacity-50">
+          Update Estimate
+        </button>
+        <button id="reset-btn" type="button" class="w-full mt-sm py-1.5 rounded font-label-md text-label-md text-on-surface-variant hover:text-primary hover:bg-surface-container-low transition-colors">
+          Reset to defaults
+        </button>
+      </div>
+      <div class="p-lg flex flex-col gap-md">
+        <div>
+          <span class="font-label-md text-label-md text-on-surface-variant uppercase block mb-xs">Estimated Market Value</span>
+          <div class="flex items-baseline gap-sm flex-wrap">
+            <span id="est-price" class="font-headline-lg text-headline-lg text-primary">—</span>
+            <span id="est-note" class="font-data-mono text-data-mono text-secondary">waiting…</span>
+          </div>
+          <p class="font-body-md text-body-md text-on-surface-variant mt-xs">Specification-based estimate — actual retail prices may differ.</p>
+        </div>
+        <div class="border-t border-surface-variant pt-md">
+          <span class="font-label-md text-label-md text-on-surface-variant uppercase block mb-xs">Estimated Price Range</span>
+          <div class="flex justify-between items-center mb-xs">
+            <span id="ci-low" class="font-data-mono text-data-mono text-on-surface">—</span>
+            <span id="ci-high" class="font-data-mono text-data-mono text-on-surface">—</span>
+          </div>
+          <div class="h-2 w-full bg-surface-container rounded-full overflow-hidden flex">
+            <div class="h-full bg-transparent w-1/4"></div>
+            <div id="ci-bar" class="h-full bg-primary rounded-full opacity-80" style="width:50%"></div>
+            <div class="h-full bg-transparent w-1/4"></div>
+          </div>
+          <p class="font-label-sm text-label-sm text-on-surface-variant mt-xs">Approximate model range, not a statistical confidence interval.</p>
+        </div>
+        <div id="result-error" class="hidden mt-md p-md bg-error-container/30 border border-error/30 rounded text-error font-body-md text-body-md"></div>
+      </div>
+      <div class="p-lg bg-surface-bright border-t border-surface-variant">
+        <h4 class="font-label-md text-label-md text-on-surface-variant uppercase mb-md">Relative contribution to this estimate</h4>
+        <div id="contributions" class="flex flex-col gap-sm"></div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant mt-sm">Feature contributions for this prediction — not a causal explanation of pricing.</p>
+      </div>
+      <div id="premium-warning" class="hidden p-md bg-error-container/30 border-t border-error-container text-on-surface flex gap-sm items-start">
+        <span class="material-symbols-outlined text-error mt-0.5">info</span>
+        <div>
+          <p class="font-label-md text-label-md text-error uppercase mb-1">Premium Tier Warning</p>
+          <p class="font-body-md text-body-md text-on-surface text-[13px]">Estimates become less reliable at the top end due to sparse dataset examples in ultra-premium segments (&gt;₹1,00,000).</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const fmt = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+
+const FORM_DEFAULTS = {
+  brand: "Samsung", ram: 12, processor_speed: 3.2, cores: 8, processor_brand: "qualcomm",
+  memory: 256, battery: 5000, fast_charging: 45, rear_camera: 50, front_camera: 12,
+  rear_camera_count: 3, screen_size: 6.7, refresh_rate: 120, os: "Android v15",
+  charging_speed_type: "Super Fast", has_5g: true, has_nfc: true, has_ir: false
+};
+
+function num(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function payload() {
+  return {
+    brand: document.getElementById("brand").value,
+    ram: num("ram"),
+    processor_speed: num("processor_speed"),
+    cores: num("cores"),
+    processor_brand: document.getElementById("processor_brand").value,
+    memory: num("memory"),
+    battery: num("battery"),
+    fast_charging: num("fast_charging"),
+    rear_camera: num("rear_camera"),
+    front_camera: num("front_camera"),
+    rear_camera_count: num("rear_camera_count"),
+    screen_size: num("screen_size"),
+    refresh_rate: num("refresh_rate"),
+    os: document.getElementById("os").value,
+    charging_speed_type: document.getElementById("charging_speed_type").value,
+    has_5g: document.getElementById("has_5g").checked,
+    has_nfc: document.getElementById("has_nfc").checked,
+    has_ir: document.getElementById("has_ir").checked
+  };
+}
+
+function renderChips() {
+  const p = payload();
+  const chips = [
+    p.brand,
+    `${p.ram} GB RAM`,
+    `${p.memory} GB`,
+    `${p.processor_speed} GHz (${p.cores}c)`,
+    `${p.screen_size}" ${p.refresh_rate}Hz`,
+    `${p.rear_camera}MP`,
+    `${p.battery} mAh`,
+    `${p.fast_charging}W`
+  ];
+  document.getElementById("spec-chips").innerHTML = chips.map(c =>
+    `<span class="bg-surface-variant text-on-surface-variant font-label-sm text-label-sm px-2 py-1 rounded">${c}</span>`).join("");
+}
+
+function renderContributions(list) {
+  const el = document.getElementById("contributions");
+  el.innerHTML = list.slice(0, 6).map(c =>
+    `<div class="flex items-center gap-sm">
+      <span class="font-label-sm text-label-sm text-on-surface w-24 text-right">${c.label}</span>
+      <div class="flex-grow h-1.5 bg-surface-container rounded-full">
+        <div class="h-full bg-primary rounded-full" style="width:${c.pct}%"></div>
+      </div>
+    </div>`).join("");
+}
+
+function showError(msg) {
+  const el = document.getElementById("result-error");
+  el.textContent = msg;
+  el.classList.remove("hidden");
+}
+
+function clearError() {
+  document.getElementById("result-error").classList.add("hidden");
+}
+
+function setLoading(on) {
+  const btn = document.getElementById("update-btn");
+  btn.disabled = on;
+  btn.textContent = on ? "Estimating…" : "Update Estimate";
+  document.getElementById("est-price").classList.toggle("opacity-50", on);
+}
+
+async function updateEstimate() {
+  setLoading(true);
+  try {
+    const res = await fetch("/api/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload())
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || "Request failed");
+    clearError();
+    document.getElementById("est-price").textContent = "₹" + fmt.format(d.price);
+    document.getElementById("est-note").textContent = "±" + d.range_pct + "% typical spread";
+    document.getElementById("ci-low").textContent = "₹" + fmt.format(d.price_low);
+    document.getElementById("ci-high").textContent = "₹" + fmt.format(d.price_high);
+    document.getElementById("ci-bar").style.width = "50%";
+    renderContributions(d.contributions);
+    document.getElementById("premium-warning").classList.toggle("hidden", d.price <= 100000);
+  } catch (e) {
+    showError(e.message);
+    document.getElementById("est-note").textContent = "estimate unavailable";
+  } finally {
+    setLoading(false);
+  }
+}
+
+function resetForm() {
+  for (const [id, v] of Object.entries(FORM_DEFAULTS)) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    if (el.type === "checkbox") el.checked = !!v;
+    else el.value = v;
+  }
+  renderChips();
+  clearError();
+  updateEstimate();
+}
+
+const LIVE_IDS = ["brand", "ram", "processor_speed", "cores", "processor_brand", "memory",
+  "battery", "fast_charging", "rear_camera", "front_camera", "rear_camera_count",
+  "screen_size", "refresh_rate", "os", "charging_speed_type", "has_5g", "has_nfc", "has_ir"];
+
+let debounceTimer;
+for (const id of LIVE_IDS) {
+  const el = document.getElementById(id);
+  el.addEventListener("input", () => {
+    renderChips();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(updateEstimate, 500);
+  });
+  el.addEventListener("change", () => {
+    renderChips();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(updateEstimate, 500);
+  });
+}
+
+document.getElementById("update-btn").addEventListener("click", (e) => { e.preventDefault(); updateEstimate(); });
+document.getElementById("reset-btn").addEventListener("click", resetForm);
+document.getElementById("spec-form").addEventListener("submit", (e) => e.preventDefault());
+
+renderChips();
+updateEstimate();
+</script>
+{% endblock %}

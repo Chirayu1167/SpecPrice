@@ -1,0 +1,14 @@
+{
+  "cv_mape_pct": 19.8,
+  "params": {
+    "n_estimators": 500,
+    "learning_rate": 0.03,
+    "max_depth": 7,
+    "min_child_weight": 3,
+    "subsample": 0.7,
+    "colsample_bytree": 0.4,
+    "reg_lambda": 0.1,
+    "reg_alpha": 0.0,
+    "max_bin": 128
+  }
+}
